@@ -86,24 +86,26 @@ OpenSubdiv::Sdc::Options
 Converter::GetOptions() const {
     using namespace OpenSubdiv::Sdc;
 
+    //
+    // initialize OSD options for USD Mesh defaults and override when assigned
+    //
+
     Options options;
+
+    options.SetVtxBoundaryInterpolation(Options::VTX_BOUNDARY_EDGE_AND_CORNER);
+    options.SetFVarLinearInterpolation(Options::FVAR_LINEAR_CORNERS_PLUS1);
+    options.SetCreasingMethod(Options::CREASE_UNIFORM);
+    options.SetTriangleSubdivision(Options::TRI_SUB_CATMARK);
 
     //
     // vertex boundary interpolation rule
     //
 
-    // XXX: there is a bug in OpenSubdiv 3.0.0, which drops
-    // boundary faces of bilinear scheme mesh when
-    // boundaryInterpolationMode=None. To workaround the bug
-    // override boundary interpolation mode to be edgeAndCorner.
-    TfToken const scheme = topology.GetScheme();
     TfToken const interpolateBoundary =
-        scheme == PxOsdOpenSubdivTokens->bilinear ?
-        PxOsdOpenSubdivTokens->edgeAndCorner :
         topology.GetSubdivTags().GetVertexInterpolationRule();
 
     if (!interpolateBoundary.IsEmpty()) {
-               if (interpolateBoundary==PxOsdOpenSubdivTokens->none) {
+        if (interpolateBoundary==PxOsdOpenSubdivTokens->none) {
             options.SetVtxBoundaryInterpolation(Options::VTX_BOUNDARY_NONE);
         } else if (interpolateBoundary==PxOsdOpenSubdivTokens->edgeOnly) {
             options.SetVtxBoundaryInterpolation(Options::VTX_BOUNDARY_EDGE_ONLY);
@@ -113,15 +115,10 @@ Converter::GetOptions() const {
             TF_WARN("Unknown vertex boundary interpolation rule (%s) (%s)",
                 interpolateBoundary.GetText(), name.GetText());
         }
-    } else {
-        // XXX legacy assets expect a default of "edge & corner" if no
-        //     tag has been defined. this should default to Osd defaults
-        //     instead
-        options.SetVtxBoundaryInterpolation(Options::VTX_BOUNDARY_EDGE_AND_CORNER);
     }
 
     //
-    // face-varying boundary interpolation rule
+    // face-varying linear interpolation rule
     //
 
     TfToken const faceVaryingLinearInterpolation =
@@ -144,11 +141,6 @@ Converter::GetOptions() const {
             TF_WARN("Unknown face-varying boundary interpolation rule (%s) (%s)",
                 faceVaryingLinearInterpolation.GetText(), name.GetText());
         }
-    } else {
-        // XXX legacy assets expect a default of "edge & corner" if no
-        //     tag has been defined. this should default to Osd defaults
-        //     instead
-        options.SetFVarLinearInterpolation(Options::FVAR_LINEAR_NONE);
     }
 
     //
@@ -159,7 +151,7 @@ Converter::GetOptions() const {
         topology.GetSubdivTags().GetCreaseMethod();
 
     if (!creaseMethod.IsEmpty()) {
-               if (creaseMethod==PxOsdOpenSubdivTokens->uniform) {
+        if (creaseMethod==PxOsdOpenSubdivTokens->uniform) {
             options.SetCreasingMethod(Options::CREASE_UNIFORM);
         } else if (creaseMethod==PxOsdOpenSubdivTokens->chaikin) {
             options.SetCreasingMethod(Options::CREASE_CHAIKIN);
