@@ -54,27 +54,68 @@ class SdfAssetPath;
 
 /// \class UsdGeomMesh
 ///
-/// Encodes a mesh surface whose definition and feature-set
-/// will converge with that of OpenSubdiv, http://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html.
-/// Certain interpolation ("tag") parameters are not yet supported.
+/// Encodes a mesh with optional subdivision properties and features.
 /// 
+/// Meshes are conceptually defined in terms of vertices, edges and faces.
+/// As a point-based primitive, the terms "vertex" and "point" are synonymous,
+/// as are associated terms such as "point index" and "vertex index", etc.
+/// The encoding defines the mesh topology completely in terms of a set of
+/// faces and their defining face-vertices (see _faceVertexCounts_ and
+/// _faceVertexIndices_).  No boundary representation or additional
+/// connectivity between vertices, edges and faces is required or
+/// constructed, so no adjacency or neighborhood queries are available.
+///
 /// A key property of this mesh schema is that it encodes both subdivision
-/// surfaces, and non-subdivided "polygonal meshes", by varying the
-/// \em subdivisionScheme attribute.
+/// surfaces and simpler polygonal meshes. This is achieved by varying the
+/// _subdivisionScheme_ attribute, which is set to specify Catmull-Clark
+/// subdivision by default, so polygonal meshes must always be expliclty
+/// declared. The available subdivision schemes and additional subdivision
+/// features encoded in optional attributes conform to the feature set of
+/// OpenSubdiv
+/// (https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html).
 /// 
-/// \section UsdGeom_Mesh_Normals A Note About Normals
+/// \anchor UsdGeom_Mesh_Primvars
+/// <b>A Note About Primvars</b>
+///
+/// The following lists clarifies the number of elements for and the
+/// interpolation behavior of the different primvar interpolation types
+/// for meshes:
+///
+/// \li <b>constant</b> One element for the entire mesh; no interpolation.
+/// \li <b>uniform</b> One element for each face of the mesh; elements are
+///     typically not interpolated but are inherited by other faces derived
+///     from a given face (via subdivision, tessellation, etc.).
+/// \li <b>varying</b> One element for each vertex or point of the mesh;
+///     interpolation between elements is always linear.
+/// \li <b>vertex</b> One element for each vertex or point of the mesh;
+///     interpolation between elements is smooth, according to the
+///     _subdivisionScheme_ attribute.
+/// \li <b>faceVarying</b> One element for each of the face-vertices that
+///     define the mesh topology; interpolation between elements may be
+///     smooth or linear, according to the _subdivisionScheme_ and
+///     _faceVaryingLinearInterpolation_ attributes.
+///
+/// Primvar interpolation types and related utilities are described more
+/// generally in \ref Usd_InterpolationVals.
+///
+/// \anchor UsdGeom_Mesh_Normals
+/// <b>A Note About Normals</b>
 /// 
-/// Normals should not be authored on a subdivided mesh, since subdivision
+/// Normals should not be authored on a subdividion mesh, since subdivision
 /// algorithms define their own normals. They should only be authored for
-/// polygonal meshes (_subdivisionScheme_ = "None").
+/// polygonal meshes (_subdivisionScheme_ = "none").
 /// 
 /// The _normals_ attribute inherited from UsdGeomPointBased is not a generic
 /// primvar, but the number of elements in this attribute will be determined by
 /// its _interpolation_.  See \ref UsdGeomPointBased::GetNormalsInterpolation() .
 /// If _normals_ and _primvars:normals_ are both specified, the latter has
-/// precedence.  If a polygonal Mesh specifies __neither__ _normals_ nor
+/// precedence.  If a polygonal mesh specifies __neither__ _normals_ nor
 /// _primvars:normals_, then it should be treated and rendered as faceted,
 /// with no attempt to compute smooth normals.
+///
+/// The normals generated for smooth subdivision schemes, e.g. Catmull-Clark
+/// and Loop, will likewise be smooth, but others, e.g. Bilinear, may be
+/// discontinuous between faces and/or within non-planar irregular faces.
 ///
 /// For any described attribute \em Fallback \em Value or \em Allowed \em Values below
 /// that are text/tokens, the actual token is published and defined in \ref UsdGeomTokens.
@@ -231,15 +272,9 @@ public:
     // --------------------------------------------------------------------- //
     /// The subdivision scheme to be applied to the surface.  
     /// Valid values are "catmullClark" (the default), "loop", "bilinear", and
-    /// "none" (i.e. a polymesh with no subdivision - the primary difference
-    /// between schemes "bilinear" and "none" is that bilinearly subdivided
-    /// meshes can be considered watertight, whereas there is no such guarantee
-    /// for un-subdivided polymeshes, and more mesh features (e.g. holes) may
-    /// apply to bilinear meshes but not polymeshes.   Further, if a polymesh 
-    /// does not provide normals, then it should be treated and rendered as 
-    /// faceted, whereas a "bilinear" Mesh should compute smooth normals. 
-    /// For primarily this latter reason, polymeshes \em may be lighterweight 
-    /// and faster to render, depending on renderer and render mode.)
+    /// "none" (i.e. a polygonal mesh with no subdivision).  Polygonal meshes
+    /// are typically lighterweight and faster to render, depending on renderer
+    /// and render mode.
     ///
     /// | ||
     /// | -- | -- |
@@ -263,16 +298,27 @@ public:
     // --------------------------------------------------------------------- //
     // INTERPOLATEBOUNDARY 
     // --------------------------------------------------------------------- //
-    /// Specifies how interpolation boundary face edges are
-    /// interpolated. Valid values are "none", 
-    /// "edgeAndCorner" (the default), or "edgeOnly".
+    /// Specifies how subdivision is applied for faces adjacent to
+    /// boundary edges and vertices. Valid values correspond to choices
+    /// available in OpenSubdiv:
+    ///
+    /// - "none": no boundary interpolation is applied and boundary faces are
+    ///       effectively treated as holes
+    /// - "edgeOnly": a sequence of boundary edges defines a smooth curve to
+    ///       which the edges of subdivided boundary faces converge
+    /// - "edgeAndCorner": the default, similar to "edgeOnly" but the smooth
+    ///       boundary curve is made sharp at corner vertices
+    ///
+    /// These are illustrated and described in more detail in the OpenSubdiv
+    /// documentation:
+    /// https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#boundary-interpolation-rules
     ///
     /// | ||
     /// | -- | -- |
     /// | Declaration | `token interpolateBoundary = "edgeAndCorner"` |
     /// | C++ Type | TfToken |
     /// | \ref Usd_Datatypes "Usd Type" | SdfValueTypeNames->Token |
-    /// | \ref UsdGeomTokens "Allowed Values" | none, edgeAndCorner, edgeOnly |
+    /// | \ref UsdGeomTokens "Allowed Values" | none, edgeOnly, edgeAndCorner |
     USDGEOM_API
     UsdAttribute GetInterpolateBoundaryAttr() const;
 
@@ -288,21 +334,34 @@ public:
     // --------------------------------------------------------------------- //
     // FACEVARYINGLINEARINTERPOLATION 
     // --------------------------------------------------------------------- //
-    /// Specifies how face varying data is interpolated.  Valid values
-    /// are "all" (no smoothing), "cornersPlus1" (the default, Smooth UV),
-    /// "none" (Same as "cornersPlus1" but does not infer the presence 
-    /// of corners where two faceVarying edges meet at a single face), or 
-    /// "boundaries" (smooth only near vertices that are not at a
-    /// discontinuous boundary).
-    /// 
-    /// See http://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#face-varying-interpolation-rules
+    /// Specifies how elements of a _faceVarying_ primvar are interpolated.
+    /// Interpolation can be as smooth as a _vertex_ primvar or constrained
+    /// to be linear at features specified by several options. Valid values
+    /// correspond to choices available in OpenSubdiv:
+    ///
+    /// - "none": no linear constraints or sharpening, smooth everywhere
+    /// - "cornersOnly": sharp corners of discontinuous boundaries only,
+    ///       smooth everywhere else
+    /// - "cornersPlus1": the default, same as "cornersOnly" plus additional
+    ///       sharpening at vertices where three or more distinct face-varying
+    ///       values occur
+    /// - "cornersPlus2": same as "cornersPlus1" plus additional sharpening
+    ///       at vertices with at least one discontinuous boundary corner or
+    ///       only one face-varying edge (a dart)
+    /// - "boundaries": piecewise linear at discontinuous boundaries, smooth
+    ///       interior
+    /// - "all": piecewise linear everywhere
+    ///
+    /// These are illustrated and described in more detail in the OpenSubdiv
+    /// documentation:
+    /// https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#face-varying-interpolation-rules
     ///
     /// | ||
     /// | -- | -- |
     /// | Declaration | `token faceVaryingLinearInterpolation = "cornersPlus1"` |
     /// | C++ Type | TfToken |
     /// | \ref Usd_Datatypes "Usd Type" | SdfValueTypeNames->Token |
-    /// | \ref UsdGeomTokens "Allowed Values" | all, none, boundaries, cornersOnly, cornersPlus1, cornersPlus2 |
+    /// | \ref UsdGeomTokens "Allowed Values" | none, cornersOnly, cornersPlus1, cornersPlus2, boundaries, all |
     USDGEOM_API
     UsdAttribute GetFaceVaryingLinearInterpolationAttr() const;
 
@@ -318,11 +377,12 @@ public:
     // --------------------------------------------------------------------- //
     // TRIANGLESUBDIVISIONRULE 
     // --------------------------------------------------------------------- //
-    /// Specifies what weights are used during triangle subdivision for
-    /// the Catmull-Clark scheme. Valid values are "catmullClark" (the default) 
-    /// and "smooth".
+    /// Specifies an option to the subdivision rules for the Catmull-Clark
+    /// scheme to try and improve undesirable artifacts when subdividing
+    /// triangles.  Valid values are "catmullClark" for the standard rules (the
+    /// default) and "smooth" for the improvement.
     /// 
-    /// See http://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#triangle-subdivision-rule
+    /// See https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#triangle-subdivision-rule
     ///
     /// | ||
     /// | -- | -- |
@@ -345,8 +405,7 @@ public:
     // --------------------------------------------------------------------- //
     // HOLEINDICES 
     // --------------------------------------------------------------------- //
-    /// The face indices (indexing into the 'faceVertexCounts'
-    /// attribute) of all faces that should be made invisible.
+    /// The indices of all faces that should be made invisible.
     ///
     /// | ||
     /// | -- | -- |
@@ -368,7 +427,8 @@ public:
     // --------------------------------------------------------------------- //
     // CORNERINDICES 
     // --------------------------------------------------------------------- //
-    /// The point indices of sharp corners.
+    /// The indices of points (vertices) for which a corresponding sharpness value is
+    /// specified, so the size of this array must match that of 'cornerSharpnesses'.
     ///
     /// | ||
     /// | -- | -- |
@@ -390,10 +450,10 @@ public:
     // --------------------------------------------------------------------- //
     // CORNERSHARPNESSES 
     // --------------------------------------------------------------------- //
-    /// The sharpness values for corners: each corner gets a single
-    /// sharpness value (Usd.Mesh.SHARPNESS_INFINITE for a perfectly sharp
-    /// corner), so the size of this array must match that of
-    /// 'cornerIndices'
+    /// The sharpness values associated with a corresponding set of points
+    /// (vertices) to be sharpened, so the size of this array must match that of
+    /// 'cornerIndices'. Use Usd.Mesh.SHARPNESS_INFINITE for a perfectly sharp
+    /// corner.
     ///
     /// | ||
     /// | -- | -- |
@@ -415,10 +475,9 @@ public:
     // --------------------------------------------------------------------- //
     // CREASEINDICES 
     // --------------------------------------------------------------------- //
-    /// The point indices forming creased edges.  The size of 
-    /// this array must be equal to the sum of all elements of the 
-    /// 'creaseLengths' attribute. Neighboring indices should correspond with the
-    /// valid edges indices.
+    /// The indices of points (vertices) grouped into sets of successive pairs
+    /// that identify edges to be creased. The size of this array must be
+    /// equal to the sum of all elements of the 'creaseLengths' attribute.
     ///
     /// | ||
     /// | -- | -- |
@@ -440,11 +499,12 @@ public:
     // --------------------------------------------------------------------- //
     // CREASELENGTHS 
     // --------------------------------------------------------------------- //
-    /// The length of this array specifies the number of creases on the
-    /// surface. Each element gives the number of (must be adjacent) vertices in
-    /// each crease, whose indices are linearly laid out in the 'creaseIndices'
-    /// attribute. Since each crease must be at least one edge long, each
-    /// element of this array should be greater than one.
+    /// The length of this array specifies the number of creases (sets of
+    /// adjacent sharpened edges) on the mesh. Each element gives the number
+    /// of points (vertices) of each crease, whose indices are successively
+    /// laid out in the 'creaseIndices' attribute. Since each crease must be
+    /// at least one edge long, each element of this array must be at least
+    /// two.
     ///
     /// | ||
     /// | -- | -- |
@@ -466,15 +526,15 @@ public:
     // --------------------------------------------------------------------- //
     // CREASESHARPNESSES 
     // --------------------------------------------------------------------- //
-    /// The per-crease or per-edge sharpness for all creases
-    /// (Usd.Mesh.SHARPNESS_INFINITE for a perfectly sharp crease).  Since
-    /// 'creaseLengths' encodes the number of vertices in each crease, the
-    /// number of elements in this array will be either len(creaseLengths) or
-    /// the sum over all X of (creaseLengths[X] - 1). Note that while
+    /// The per-crease or per-edge sharpness values for all creases. Since
+    /// 'creaseLengths' encodes the number of points (vertices) in each crease,
+    /// the number of elements in this array will be either len(creaseLengths)
+    /// or the sum over all X of (creaseLengths[X] - 1). Note that while
     /// the RI spec allows each crease to have either a single sharpness
     /// or a value per-edge, USD will encode either a single sharpness
     /// per crease on a mesh, or sharpnesses for all edges making up
-    /// the creases on a mesh.
+    /// the creases on a mesh.  Use Usd.Mesh.SHARPNESS_INFINITE for a
+    /// perfectly sharp crease.
     ///
     /// | ||
     /// | -- | -- |
@@ -506,7 +566,7 @@ public:
 
     /// Validate the topology of a mesh.
     /// This validates that the sum of \p faceVertexCounts is equal to the size
-    /// of the \p faceVertexIndices array, and that all face vertex indices in
+    /// of the \p faceVertexIndices array, and that all face-vertex indices in
     /// the \p faceVertexIndices array are in the range [0, numPoints).
     /// Returns true if the topology is valid, or false otherwise.
     /// If the topology is invalid and \p reason is non-null, an error message
@@ -529,7 +589,12 @@ public:
 
     /// \var const float SHARPNESS_INFINITE
     /// As an element of a 'creaseSharpness' or 'cornerSharpness' array,
-    /// indicates that the crease or corner is perfectly sharp.
+    /// indicates that the crease or corner is perfectly sharp.  Note that
+    /// the RI spec requires that the value for infinite sharpness be
+    /// RI_INFINITY -- leaving all other values implementation defined -- but
+    /// practical implementations since (including RenderMan and OpenSubdiv)
+    /// have led to a much lower, more human-readable value being used for
+    /// this purpose.
     USDGEOM_API
     static const float SHARPNESS_INFINITE;
 };
