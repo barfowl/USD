@@ -57,18 +57,23 @@ class SdfAssetPath;
 /// Encodes a mesh with optional subdivision properties and features.
 /// 
 /// Meshes are conceptually defined in terms of vertices, edges and faces.
-/// As a point-based primitive, the terms "vertex" and "point" are synonymous,
-/// as are associated terms such as "point index" and "vertex index", etc.
-/// The encoding defines the mesh topology completely in terms of a set of
+/// As a point-based primitive, "points" are equated with mesh vertices
+/// while "vertex" has a different meaning.  In USD (and elsewhere) a
+/// "vertex" often refers the individual corners of a face -- also
+/// commonly referred to as "face-vertices".  To avoid confusion here,
+/// the term "vertex" is explicitly avoided in favor of "point" and
+/// "face-vertex".
+///
+/// The mesh encoding defines the topology completely in terms of a set of
 /// faces and their defining face-vertices (see _faceVertexCounts_ and
 /// _faceVertexIndices_).  No boundary representation or additional
-/// connectivity between vertices, edges and faces is required or
+/// connectivity between points, edges and faces is required or
 /// constructed, so no adjacency or neighborhood queries are available.
 ///
 /// A key property of this mesh schema is that it encodes both subdivision
 /// surfaces and simpler polygonal meshes. This is achieved by varying the
 /// _subdivisionScheme_ attribute, which is set to specify Catmull-Clark
-/// subdivision by default, so polygonal meshes must always be expliclty
+/// subdivision by default, so polygonal meshes must always be explicitly
 /// declared. The available subdivision schemes and additional subdivision
 /// features encoded in optional attributes conform to the feature set of
 /// OpenSubdiv
@@ -77,7 +82,7 @@ class SdfAssetPath;
 /// \anchor UsdGeom_Mesh_Primvars
 /// <b>A Note About Primvars</b>
 ///
-/// The following lists clarifies the number of elements for and the
+/// The following list clarifies the number of elements for and the
 /// interpolation behavior of the different primvar interpolation types
 /// for meshes:
 ///
@@ -85,14 +90,14 @@ class SdfAssetPath;
 /// \li <b>uniform</b> One element for each face of the mesh; elements are
 ///     typically not interpolated but are inherited by other faces derived
 ///     from a given face (via subdivision, tessellation, etc.).
-/// \li <b>varying</b> One element for each vertex or point of the mesh;
-///     interpolation between elements is always linear.
-/// \li <b>vertex</b> One element for each vertex or point of the mesh;
-///     interpolation between elements is smooth, according to the
+/// \li <b>varying</b> One element for each point of the mesh;
+///     interpolation of point data is always linear.
+/// \li <b>vertex</b> One element for each point of the mesh;
+///     interpolation of point data is applied according to the
 ///     _subdivisionScheme_ attribute.
 /// \li <b>faceVarying</b> One element for each of the face-vertices that
-///     define the mesh topology; interpolation between elements may be
-///     smooth or linear, according to the _subdivisionScheme_ and
+///     define the mesh topology; interpolation of face-vertex data may
+///     be smooth or linear, according to the _subdivisionScheme_ and
 ///     _faceVaryingLinearInterpolation_ attributes.
 ///
 /// Primvar interpolation types and related utilities are described more
@@ -101,7 +106,7 @@ class SdfAssetPath;
 /// \anchor UsdGeom_Mesh_Normals
 /// <b>A Note About Normals</b>
 /// 
-/// Normals should not be authored on a subdividion mesh, since subdivision
+/// Normals should not be authored on a subdivision mesh, since subdivision
 /// algorithms define their own normals. They should only be authored for
 /// polygonal meshes (_subdivisionScheme_ = "none").
 /// 
@@ -221,7 +226,7 @@ public:
     // FACEVERTEXINDICES 
     // --------------------------------------------------------------------- //
     /// Flat list of the index (into the 'points' attribute) of each
-    /// vertex of each face in the mesh.  If this attribute has more than
+    /// point of each face in the mesh.  If this attribute has more than
     /// one timeSample, the mesh is considered to be topologically varying.
     ///
     /// | ||
@@ -244,7 +249,7 @@ public:
     // --------------------------------------------------------------------- //
     // FACEVERTEXCOUNTS 
     // --------------------------------------------------------------------- //
-    /// Provides the number of vertices in each face of the mesh, 
+    /// Provides the number of points in each face of the mesh, 
     /// which is also the number of consecutive indices in 'faceVertexIndices'
     /// that define the face.  The length of this attribute is the number of
     /// faces in the mesh.  If this attribute has more than
@@ -270,11 +275,24 @@ public:
     // --------------------------------------------------------------------- //
     // SUBDIVISIONSCHEME 
     // --------------------------------------------------------------------- //
-    /// The subdivision scheme to be applied to the surface.  
-    /// Valid values are "catmullClark" (the default), "loop", "bilinear", and
-    /// "none" (i.e. a polygonal mesh with no subdivision).  Polygonal meshes
-    /// are typically lighterweight and faster to render, depending on renderer
-    /// and render mode.
+    /// The subdivision scheme to be applied to the surface.  Valid values are:
+    ///
+    /// - "catmullClark": the default, Catmull-Clark subdivision; preferred
+    ///       for quad-dominant meshes (generalizes B-splines); interpolation
+    ///       of point data is smooth (non-linear)
+    /// - "loop": Loop subdivision; preferred for purely triangular meshes;
+    ///       interpolation of point data is smooth (non-linear)
+    /// - "bilinear": subdivision reduces all faces to quads (topologically
+    ///       similar to "catmullClark"); interpolation of point data is
+    ///       bilinear
+    /// - "none": no subdivision, i.e. a simple polygonal mesh: interpolation
+    ///       of point data is linear
+    ///
+    /// Polygonal meshes are typically lighter weight and faster to render,
+    /// depending on renderer and render mode.  Use of "bilinear" will produce
+    /// a similar shape to a polygonal mesh and may offer additional guarantees
+    /// of watertightness and additional subdivision features (e.g. holes) but
+    /// may also not respect authored normals.
     ///
     /// | ||
     /// | -- | -- |
@@ -298,8 +316,8 @@ public:
     // --------------------------------------------------------------------- //
     // INTERPOLATEBOUNDARY 
     // --------------------------------------------------------------------- //
-    /// Specifies how subdivision is applied for faces adjacent to
-    /// boundary edges and vertices. Valid values correspond to choices
+    /// Specifies how subdivision is applied for faces adjacent to boundary
+    /// edges and boundary points. Valid values correspond to choices
     /// available in OpenSubdiv:
     ///
     /// - "none": no boundary interpolation is applied and boundary faces are
@@ -307,7 +325,7 @@ public:
     /// - "edgeOnly": a sequence of boundary edges defines a smooth curve to
     ///       which the edges of subdivided boundary faces converge
     /// - "edgeAndCorner": the default, similar to "edgeOnly" but the smooth
-    ///       boundary curve is made sharp at corner vertices
+    ///       boundary curve is made sharp at corner points
     ///
     /// These are illustrated and described in more detail in the OpenSubdiv
     /// documentation:
@@ -343,10 +361,10 @@ public:
     /// - "cornersOnly": sharp corners of discontinuous boundaries only,
     ///       smooth everywhere else
     /// - "cornersPlus1": the default, same as "cornersOnly" plus additional
-    ///       sharpening at vertices where three or more distinct face-varying
+    ///       sharpening at points where three or more distinct face-varying
     ///       values occur
     /// - "cornersPlus2": same as "cornersPlus1" plus additional sharpening
-    ///       at vertices with at least one discontinuous boundary corner or
+    ///       at points with at least one discontinuous boundary corner or
     ///       only one face-varying edge (a dart)
     /// - "boundaries": piecewise linear at discontinuous boundaries, smooth
     ///       interior
@@ -427,7 +445,7 @@ public:
     // --------------------------------------------------------------------- //
     // CORNERINDICES 
     // --------------------------------------------------------------------- //
-    /// The indices of points (vertices) for which a corresponding sharpness value is
+    /// The indices of points for which a corresponding sharpness value is
     /// specified, so the size of this array must match that of 'cornerSharpnesses'.
     ///
     /// | ||
@@ -451,7 +469,7 @@ public:
     // CORNERSHARPNESSES 
     // --------------------------------------------------------------------- //
     /// The sharpness values associated with a corresponding set of points
-    /// (vertices) to be sharpened, so the size of this array must match that of
+    /// to be sharpened, so the size of this array must match that of
     /// 'cornerIndices'. Use Usd.Mesh.SHARPNESS_INFINITE for a perfectly sharp
     /// corner.
     ///
@@ -475,7 +493,7 @@ public:
     // --------------------------------------------------------------------- //
     // CREASEINDICES 
     // --------------------------------------------------------------------- //
-    /// The indices of points (vertices) grouped into sets of successive pairs
+    /// The indices of points grouped into sets of successive pairs
     /// that identify edges to be creased. The size of this array must be
     /// equal to the sum of all elements of the 'creaseLengths' attribute.
     ///
@@ -501,7 +519,7 @@ public:
     // --------------------------------------------------------------------- //
     /// The length of this array specifies the number of creases (sets of
     /// adjacent sharpened edges) on the mesh. Each element gives the number
-    /// of points (vertices) of each crease, whose indices are successively
+    /// of points of each crease, whose indices are successively
     /// laid out in the 'creaseIndices' attribute. Since each crease must be
     /// at least one edge long, each element of this array must be at least
     /// two.
@@ -527,7 +545,7 @@ public:
     // CREASESHARPNESSES 
     // --------------------------------------------------------------------- //
     /// The per-crease or per-edge sharpness values for all creases. Since
-    /// 'creaseLengths' encodes the number of points (vertices) in each crease,
+    /// 'creaseLengths' encodes the number of points in each crease,
     /// the number of elements in this array will be either len(creaseLengths)
     /// or the sum over all X of (creaseLengths[X] - 1). Note that while
     /// the RI spec allows each crease to have either a single sharpness
