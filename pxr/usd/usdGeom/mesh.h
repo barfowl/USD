@@ -55,20 +55,23 @@ class SdfAssetPath;
 /// \class UsdGeomMesh
 ///
 /// Encodes a mesh with optional subdivision properties and features.
-/// 
-/// Meshes are conceptually defined in terms of vertices, edges and faces.
-/// As a point-based primitive, "points" are equated with mesh vertices
-/// while "vertex" has a different meaning.  In USD (and elsewhere) a
-/// "vertex" often refers the individual corners of a face -- also
-/// commonly referred to as "face-vertices".  To avoid confusion here,
-/// the term "vertex" is explicitly avoided in favor of "point" and
-/// "face-vertex".
 ///
-/// The mesh encoding defines the topology completely in terms of a set of
-/// faces and their defining face-vertices (see _faceVertexCounts_ and
-/// _faceVertexIndices_).  No boundary representation or additional
-/// connectivity between points, edges and faces is required or
-/// constructed, so no adjacency or neighborhood queries are available.
+/// As a point-based primitive, meshes are defined in terms of points that
+/// are connected into edges and faces. Many references to meshes use the
+/// term "vertex" in place of or interchangeably with "points", while some
+/// use "vertex" to refer to the "face-vertices" that define a face.  To
+/// avoid confusion, the term "vertex" is intentionally avoided in favor of
+/// "points" or "face-vertices".
+///
+/// The connectivity between points, edges and faces is encoded using a
+/// common minimal topological description of the faces of the mesh. Each
+/// face is defined by a set of face-vertices using indices into the
+/// Mesh's _UsdGeomPointBased.points_ array, laid out in a single linear
+/// _faceVertexIndices_ array for efficiency. A companion _faceVertexCounts_
+/// array provides, for each face, the number of consecutive face-vertices
+/// in _faceVertexIndices_ that define the face.  No additional connectivity
+/// information is required or constructed, so no adjacency or neighborhood
+/// queries are available.
 ///
 /// A key property of this mesh schema is that it encodes both subdivision
 /// surfaces and simpler polygonal meshes. This is achieved by varying the
