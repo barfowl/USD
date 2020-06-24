@@ -55,24 +55,24 @@ class SdfAssetPath;
 /// \class UsdGeomMesh
 ///
 /// Encodes a mesh with optional subdivision properties and features.
-///
-/// As a point-based primitive, meshes are defined in terms of points that
+/// 
+/// As a point-based primitive, meshes are defined in terms of points that 
 /// are connected into edges and faces. Many references to meshes use the
 /// term "vertex" in place of or interchangeably with "points", while some
 /// use "vertex" to refer to the "face-vertices" that define a face.  To
 /// avoid confusion, the term "vertex" is intentionally avoided in favor of
 /// "points" or "face-vertices".
-///
+/// 
 /// The connectivity between points, edges and faces is encoded using a
-/// common minimal topological description of the faces of the mesh. Each
+/// common minimal topological description of the faces of the mesh.  Each
 /// face is defined by a set of face-vertices using indices into the
 /// Mesh's _UsdGeomPointBased.points_ array, laid out in a single linear
-/// _faceVertexIndices_ array for efficiency. A companion _faceVertexCounts_
+/// _faceVertexIndices_ array for efficiency.  A companion _faceVertexCounts_
 /// array provides, for each face, the number of consecutive face-vertices
 /// in _faceVertexIndices_ that define the face.  No additional connectivity
 /// information is required or constructed, so no adjacency or neighborhood
 /// queries are available.
-///
+/// 
 /// A key property of this mesh schema is that it encodes both subdivision
 /// surfaces and simpler polygonal meshes. This is achieved by varying the
 /// _subdivisionScheme_ attribute, which is set to specify Catmull-Clark
@@ -84,28 +84,28 @@ class SdfAssetPath;
 /// 
 /// \anchor UsdGeom_Mesh_Primvars
 /// <b>A Note About Primvars</b>
-///
+/// 
 /// The following list clarifies the number of elements for and the
 /// interpolation behavior of the different primvar interpolation types
 /// for meshes:
-///
+/// 
 /// \li <b>constant</b> One element for the entire mesh; no interpolation.
 /// \li <b>uniform</b> One element for each face of the mesh; elements are
-///     typically not interpolated but are inherited by other faces derived
-///     from a given face (via subdivision, tessellation, etc.).
+/// typically not interpolated but are inherited by other faces derived
+/// from a given face (via subdivision, tessellation, etc.).
 /// \li <b>varying</b> One element for each point of the mesh;
-///     interpolation of point data is always linear.
+/// interpolation of point data is always linear.
 /// \li <b>vertex</b> One element for each point of the mesh;
-///     interpolation of point data is applied according to the
-///     _subdivisionScheme_ attribute.
+/// interpolation of point data is applied according to the
+/// _subdivisionScheme_ attribute.
 /// \li <b>faceVarying</b> One element for each of the face-vertices that
-///     define the mesh topology; interpolation of face-vertex data may
-///     be smooth or linear, according to the _subdivisionScheme_ and
-///     _faceVaryingLinearInterpolation_ attributes.
-///
+/// define the mesh topology; interpolation of face-vertex data may
+/// be smooth or linear, according to the _subdivisionScheme_ and
+/// _faceVaryingLinearInterpolation_ attributes.
+/// 
 /// Primvar interpolation types and related utilities are described more
 /// generally in \ref Usd_InterpolationVals.
-///
+/// 
 /// \anchor UsdGeom_Mesh_Normals
 /// <b>A Note About Normals</b>
 /// 
@@ -120,7 +120,7 @@ class SdfAssetPath;
 /// precedence.  If a polygonal mesh specifies __neither__ _normals_ nor
 /// _primvars:normals_, then it should be treated and rendered as faceted,
 /// with no attempt to compute smooth normals.
-///
+/// 
 /// The normals generated for smooth subdivision schemes, e.g. Catmull-Clark
 /// and Loop, will likewise be smooth, but others, e.g. Bilinear, may be
 /// discontinuous between faces and/or within non-planar irregular faces.
@@ -278,19 +278,19 @@ public:
     // --------------------------------------------------------------------- //
     // SUBDIVISIONSCHEME 
     // --------------------------------------------------------------------- //
-    /// The subdivision scheme to be applied to the surface.  Valid values are:
-    ///
+    /// The subdivision scheme to be applied to the surface.
+    /// Valid values are:
+    /// 
     /// - "catmullClark": the default, Catmull-Clark subdivision; preferred
-    ///       for quad-dominant meshes (generalizes B-splines); interpolation
-    ///       of point data is smooth (non-linear)
+    /// for quad-dominant meshes (generalizes B-splines); interpolation
+    /// of point data is smooth (non-linear)
     /// - "loop": Loop subdivision; preferred for purely triangular meshes;
-    ///       interpolation of point data is smooth (non-linear)
+    /// interpolation of point data is smooth (non-linear)
     /// - "bilinear": subdivision reduces all faces to quads (topologically
-    ///       similar to "catmullClark"); interpolation of point data is
-    ///       bilinear
+    /// similar to "catmullClark"); interpolation of point data is bilinear
     /// - "none": no subdivision, i.e. a simple polygonal mesh: interpolation
-    ///       of point data is linear
-    ///
+    /// of point data is linear
+    /// 
     /// Polygonal meshes are typically lighter weight and faster to render,
     /// depending on renderer and render mode.  Use of "bilinear" will produce
     /// a similar shape to a polygonal mesh and may offer additional guarantees
@@ -319,17 +319,17 @@ public:
     // --------------------------------------------------------------------- //
     // INTERPOLATEBOUNDARY 
     // --------------------------------------------------------------------- //
-    /// Specifies how subdivision is applied for faces adjacent to boundary
-    /// edges and boundary points. Valid values correspond to choices
+    /// Specifies how subdivision is applied for faces adjacent to
+    /// boundary edges and boundary points. Valid values correspond to choices
     /// available in OpenSubdiv:
-    ///
+    /// 
     /// - "none": no boundary interpolation is applied and boundary faces are
-    ///       effectively treated as holes
+    /// effectively treated as holes
     /// - "edgeOnly": a sequence of boundary edges defines a smooth curve to
-    ///       which the edges of subdivided boundary faces converge
+    /// which the edges of subdivided boundary faces converge
     /// - "edgeAndCorner": the default, similar to "edgeOnly" but the smooth
-    ///       boundary curve is made sharp at corner points
-    ///
+    /// boundary curve is made sharp at corner points
+    /// 
     /// These are illustrated and described in more detail in the OpenSubdiv
     /// documentation:
     /// https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#boundary-interpolation-rules
@@ -355,24 +355,24 @@ public:
     // --------------------------------------------------------------------- //
     // FACEVARYINGLINEARINTERPOLATION 
     // --------------------------------------------------------------------- //
-    /// Specifies how elements of a _faceVarying_ primvar are interpolated.
-    /// Interpolation can be as smooth as a _vertex_ primvar or constrained
-    /// to be linear at features specified by several options. Valid values
-    /// correspond to choices available in OpenSubdiv:
-    ///
+    /// Specifies how elements of a _faceVarying_ primvar are
+    /// interpolated. Interpolation can be as smooth as a _vertex_ primvar or
+    /// constrained to be linear at features specified by several options.
+    /// Valid values correspond to choices available in OpenSubdiv:
+    /// 
     /// - "none": no linear constraints or sharpening, smooth everywhere
     /// - "cornersOnly": sharp corners of discontinuous boundaries only,
-    ///       smooth everywhere else
+    /// smooth everywhere else
     /// - "cornersPlus1": the default, same as "cornersOnly" plus additional
-    ///       sharpening at points where three or more distinct face-varying
-    ///       values occur
+    /// sharpening at points where three or more distinct face-varying
+    /// values occur
     /// - "cornersPlus2": same as "cornersPlus1" plus additional sharpening
-    ///       at points with at least one discontinuous boundary corner or
-    ///       only one face-varying edge (a dart)
+    /// at points with at least one discontinuous boundary corner or
+    /// only one face-varying edge (a dart)
     /// - "boundaries": piecewise linear at discontinuous boundaries, smooth
-    ///       interior
+    /// interior
     /// - "all": piecewise linear everywhere
-    ///
+    /// 
     /// These are illustrated and described in more detail in the OpenSubdiv
     /// documentation:
     /// https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#face-varying-interpolation-rules
@@ -398,10 +398,10 @@ public:
     // --------------------------------------------------------------------- //
     // TRIANGLESUBDIVISIONRULE 
     // --------------------------------------------------------------------- //
-    /// Specifies an option to the subdivision rules for the Catmull-Clark
-    /// scheme to try and improve undesirable artifacts when subdividing
-    /// triangles.  Valid values are "catmullClark" for the standard rules (the
-    /// default) and "smooth" for the improvement.
+    /// Specifies an option to the subdivision rules for the
+    /// Catmull-Clark scheme to try and improve undesirable artifacts when
+    /// subdividing triangles.  Valid values are "catmullClark" for the
+    /// standard rules (the default) and "smooth" for the improvement.
     /// 
     /// See https://graphics.pixar.com/opensubdiv/docs/subdivision_surfaces.html#triangle-subdivision-rule
     ///
@@ -448,8 +448,9 @@ public:
     // --------------------------------------------------------------------- //
     // CORNERINDICES 
     // --------------------------------------------------------------------- //
-    /// The indices of points for which a corresponding sharpness value is
-    /// specified, so the size of this array must match that of 'cornerSharpnesses'.
+    /// The indices of points for which a corresponding sharpness
+    /// value is specified, so the size of this array must match that of
+    /// 'cornerSharpnesses'.
     ///
     /// | ||
     /// | -- | -- |
@@ -471,10 +472,10 @@ public:
     // --------------------------------------------------------------------- //
     // CORNERSHARPNESSES 
     // --------------------------------------------------------------------- //
-    /// The sharpness values associated with a corresponding set of points
-    /// to be sharpened, so the size of this array must match that of
-    /// 'cornerIndices'. Use Usd.Mesh.SHARPNESS_INFINITE for a perfectly sharp
-    /// corner.
+    /// The sharpness values associated with a corresponding set of
+    /// points to be sharpened, so the size of this array must match that of
+    /// 'cornerIndices'. Use Usd.Mesh.SHARPNESS_INFINITE for a perfectly
+    /// sharp corner.
     ///
     /// | ||
     /// | -- | -- |
@@ -520,12 +521,12 @@ public:
     // --------------------------------------------------------------------- //
     // CREASELENGTHS 
     // --------------------------------------------------------------------- //
-    /// The length of this array specifies the number of creases (sets of
-    /// adjacent sharpened edges) on the mesh. Each element gives the number
-    /// of points of each crease, whose indices are successively
-    /// laid out in the 'creaseIndices' attribute. Since each crease must be
-    /// at least one edge long, each element of this array must be at least
-    /// two.
+    /// The length of this array specifies the number of creases
+    /// (sets of adjacent sharpened edges) on the mesh. Each element gives
+    /// the number of points of each crease, whose indices are successively
+    /// laid out in the 'creaseIndices' attribute. Since each crease must
+    /// be at least one edge long, each element of this array must be at
+    /// least two.
     ///
     /// | ||
     /// | -- | -- |
@@ -547,8 +548,8 @@ public:
     // --------------------------------------------------------------------- //
     // CREASESHARPNESSES 
     // --------------------------------------------------------------------- //
-    /// The per-crease or per-edge sharpness values for all creases. Since
-    /// 'creaseLengths' encodes the number of points in each crease,
+    /// The per-crease or per-edge sharpness values for all creases.
+    /// Since 'creaseLengths' encodes the number of points in each crease,
     /// the number of elements in this array will be either len(creaseLengths)
     /// or the sum over all X of (creaseLengths[X] - 1). Note that while
     /// the RI spec allows each crease to have either a single sharpness
