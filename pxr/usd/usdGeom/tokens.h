@@ -132,7 +132,7 @@ struct UsdGeomTokensType {
     const TfToken closed;
     /// \brief "constant"
     /// 
-    /// Possible value for UsdGeomPrimvar::SetInterpolation. Default value for UsdGeomPrimvar::GetInterpolation. One value remains constant over the entire surface primitive.
+    /// Possible value for UsdGeomPrimvar::SetInterpolation. Default value for UsdGeomPrimvar::GetInterpolation. One value remains constant over the entire primitive.
     const TfToken constant;
     /// \brief "cornerIndices"
     /// 
@@ -216,7 +216,7 @@ struct UsdGeomTokensType {
     const TfToken face;
     /// \brief "faceVarying"
     /// 
-    /// Possible value for UsdGeomPrimvar::SetInterpolation. For polygons and subdivision surfaces, four values are interpolated over each face of the mesh. Bilinear interpolation  is used for interpolation between the four values.
+    /// Possible value for UsdGeomPrimvar::SetInterpolation. For polygons and subdivision surfaces, values associated with face-vertices are interpolated over each face of the mesh. The interpolation is linear for polygons and depends on the subdivision scheme and other linear interpolation options for subdivision surfaces.
     const TfToken faceVarying;
     /// \brief "faceVaryingLinearInterpolation"
     /// 
@@ -584,7 +584,7 @@ struct UsdGeomTokensType {
     const TfToken unauthoredValuesIndex;
     /// \brief "uniform"
     /// 
-    /// Possible value for UsdGeomPrimvar::SetInterpolation. One value remains constant for each uv patch segment of the surface primitive (which is a \em face for meshes).
+    /// Possible value for UsdGeomPrimvar::SetInterpolation. One value remains constant for each segment of the primitive (which is a _face_ for meshes).
     const TfToken uniform;
     /// \brief "unrestricted"
     /// 
@@ -608,7 +608,7 @@ struct UsdGeomTokensType {
     const TfToken uVertexCount;
     /// \brief "varying"
     /// 
-    /// Possible value for UsdGeomPrimvar::SetInterpolation. Four values are interpolated over each uv patch segment of the  surface. Bilinear interpolation is used for interpolation  between the four values.
+    /// Possible value for UsdGeomPrimvar::SetInterpolation. Values associated with segment endpoints are linearly interpolated over each segment.
     const TfToken varying;
     /// \brief "velocities"
     /// 
@@ -616,7 +616,7 @@ struct UsdGeomTokensType {
     const TfToken velocities;
     /// \brief "vertex"
     /// 
-    /// Possible value for UsdGeomPrimvar::SetInterpolation. Values are interpolated between each vertex in the surface primitive. The basis function of the surface is used for  interpolation between vertices.
+    /// Possible value for UsdGeomPrimvar::SetInterpolation. Values associated with points are interpolated over each segment using the same interpolation scheme applied to point positions.
     const TfToken vertex;
     /// \brief "verticalAperture"
     /// 
