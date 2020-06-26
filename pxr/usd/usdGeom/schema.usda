@@ -823,12 +823,12 @@ class Mesh "Mesh" (
     #
     int[] faceVertexIndices (
         doc = """Flat list of the index (into the _points_ attribute) of each
-        point of each face in the mesh.  If this attribute has more than
+        vertex of each face in the mesh.  If this attribute has more than
         one timeSample, the mesh is considered to be topologically varying."""
     )
     
     int[] faceVertexCounts (
-        doc = """Provides the number of points in each face of the mesh, 
+        doc = """Provides the number of vertices in each face of the mesh, 
         which is also the number of consecutive indices in _faceVertexIndices_
         that define the face.  The length of this attribute is the number of
         faces in the mesh.  If this attribute has more than
@@ -880,21 +880,22 @@ class Mesh "Mesh" (
     token faceVaryingLinearInterpolation = "cornersPlus1" (
         allowedTokens = ["none", "cornersOnly", "cornersPlus1",
                          "cornersPlus2", "boundaries", "all"]
-        doc = """Specifies how elements of a "faceVarying" primvar are
-        interpolated. Interpolation can be as smooth as a "vertex" primvar or
-        constrained to be linear at features specified by several options.
-        Valid values correspond to choices available in OpenSubdiv:
+        doc = """Specifies how elements of a primvar of interpolation type
+        "faceVarying" are interpolated for subdivision surfaces. Interpolation
+        can be as smooth as a "vertex" primvar or constrained to be linear at
+        features specified by several options.  Valid values correspond to
+        choices available in OpenSubdiv:
 
         - __none__: No linear constraints or sharpening, smooth everywhere
-        - __cornersOnly__: Sharp corners of discontinuous boundaries only,
+        - __cornersOnly__: Sharpen corners of interior boundaries only,
           smooth everywhere else
         - __cornersPlus1__: The default, same as "cornersOnly" plus additional
           sharpening at points where three or more distinct face-varying
           values occur
         - __cornersPlus2__: Same as "cornersPlus1" plus additional sharpening
-          at points with at least one discontinuous boundary corner or
-          only one face-varying edge (a dart)
-        - __boundaries__: Piecewise linear at discontinuous boundaries, smooth
+          at points with at least one interior boundary corner or
+          only one interior boundary edge (a dart)
+        - __boundaries__: Piecewise linear along interior boundaries, smooth
           interior
         - __all__: Piecewise linear everywhere
 
