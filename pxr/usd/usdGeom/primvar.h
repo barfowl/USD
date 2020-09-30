@@ -239,6 +239,9 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// \li <b>faceVarying</b> For polygons and subdivision surfaces, four values 
 ///     are interpolated over each face of the mesh. Bilinear interpolation 
 ///     is used for interpolation between the four values.
+/// (This potentially warrants updating given changes to token descriptions.
+/// The text for each type in the list above appears to be taken directly
+/// from the token descriptions defined elsewhere (in schema.usda))
 ///
 /// \section Usd_Extending_UsdObject_Classes UsdGeomPrimvar As Example of Attribute Schema
 ///
